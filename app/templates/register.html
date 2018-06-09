@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{%block head%}
+<title>register</title>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+<script>
+    $(function () {
+        var vm = new Vue({
+            el: '#vm',
+            data: {
+                user: '',
+                password1: '',
+                password2: ''
+            },
+            methods: {
+                submit: function (event) {
+                    event.preventDefault();
+                    var $form = $('#vm');
+                    if (!this.user.trim()) {
+                        $('#warnbox')[0].className = 'show';
+                        document.getElementById('warn').innerHTML = '请输入用户名';
+                        return
+                    }
+                    if (this.password1.length < 6) {
+                        $('#warnbox')[0].className = 'show';
+                        document.getElementById('warn').innerHTML = '密码至少为6个字符';
+                        return
+                    }
+                    if (this.password1 !== this.password2) {
+                        $('#warnbox')[0].className = 'show';
+                        document.getElementById('warn').innerHTML = '两次输入的口令不一致';
+                        return
+                    }
+                    $.ajax({
+                        url: '/register',
+                        type: 'post',
+                        dataType: 'json',
+                        data: {
+                            user: this.user.trim(),
+                            password1: this.password1,
+                            password2: this.password2
+                        },
+                        success: function (e) {
+                            if (!e.error) {
+                                alert('注册成功！');
+                                return location.assign('/login');
+                            }
+                            else {
+                                $('#warnbox')[0].className = 'show';
+                                document.getElementById('warn').innerHTML = e.error;
+                            }
+                        },
+                    });
+                }
+            }
+
+        });
+        $('#vm').show();
+    });
+</script>
+{%endblock%}
+{%block body%}
+<h3 style="text-align: center;">注册用户</h3>
+<div id="warnbox" class="hide">
+    <div class="alert alert-danger" role="alert" style="margin-left:200px;margin-right: 200px">
+        <p class="alert-link" style="text-align: center" id="warn"></p>
+    </div>
+</div>
+<div style="margin-left: 300px; margin-right: 300px">
+    <form id="vm" v-on:submit="submit" method="post">
+
+        <div class="form-group">
+            <input type="text" placeholder="输入用户名" name="user" class="form-control" v-model="user"></div>
+        <div class="form-group">
+            <input type="password" placeholder="输入密码" name="password1" class="form-control" v-model="password1"></div>
+        <div class="form-group">
+            <input type="password" placeholder="确认密码" name="password2" class="form-control" v-model="password2">
+        </div>
+        <button type="submit" class="btn btn-default">注册</button>
+    </form>
+</div>
+{%endblock%}

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{%block head%}
+<title>Welcome to MessageBoard</title>
+<script src="/static/js/gt.js"></script>
+<link rel="stylesheet" href="/static/css/main.css">
+{%endblock%}
+{%block body%}
+<div id="main">
+    <div class="panel panel-default">
+        <form action="{{url_for('main.main_page')}}" method="post">
+            <label for="content" class="panel-heading" style="font-size:17px">留个言吧</label>
+            <br>
+            <textarea rows="5" cols="80" name="content" id="content" placeholder="请输入内容" class="well"></textarea>
+
+            <input type="hidden" name="number" id="number" value="">
+            <input type="hidden" name="type" id="type" value="">
+            <div id="captcha" class="hide">
+                <div id="embed-captcha" style="margin-left:300px"></div>
+                <p id="wait" class="show">正在加载验证码......</p>
+                <p id="notice" class="hide">请先拖动验证码到相应位置</p>
+                <br>
+                <input class="btn btn-lg" id="embed-submit" type="submit" value="发表" style="margin-left:420px"></div>
+            <input type="submit" value="发表" id="btn" class="btn btn-lg">
+            <br><br>
+        </form>
+
+        {%if messages%}
+        <div class="panel panel-default" style="word-break: break-all;">
+            {%for message in messages%}
+            <div class="panel-heading"><span>by:
+        {%if author[message.id] %} {{author[message.id]}}{%else%} 游客{{message.user_id}}</span>{%endif%}
+                <span>日期:{{message.created_date}}</span></div>
+            <br>
+            <p class="messages">{{message.message}}</p>
+            <br>
+            {%endfor%}{%endif%}
+        </div>
+    </div>
+    {% if messages %}
+    <nav style="text-align: center">
+        <ul class="pagination">
+            <li>
+                <a href="{% if pagination.has_prev %}{{ url_for('main.main_page',page=pagination.page - 1) }}{% else %}#{% endif %}">«</a>
+            </li>
+            {% for p in pagination.page_list %}
+            <li>
+                <a href="{{ url_for('main.main_page',page=p) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            <li>
+                <a href="{% if pagination.has_next %}{{ url_for('main.main_page',page=pagination.page + 1) }}{% else %}#{% endif %}">»</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+<script>
+    document.getElementById('number').value = fingerprint;
+
+    $.ajax({
+        url: '/isvalid/',
+        type: 'get',
+        dataType: 'json',
+        success: function (data) {
+            if (data.valid) {
+                $('#btn')[0].className = 'hide';
+                document.getElementById('type').value = 'captcha';
+                $.ajax({
+                    url: "/gtinit?t=" + (new Date()).getTime(),
+                    type: "get",
+                    dataType: "json",
+                    success: function (data) {
+                        initGeetest({
+                            valid: data.valid,
+                            gt: data.gt,
+                            challenge: data.challenge,
+                            product: "embed",
+                            offline: !data.success
+                        }, handlerEmbed);
+                    }
+                });
+            }
+        },
+    });
+
+
+</script>
+<script>
+    var handlerEmbed = function (captchaObj) {
+
+        $("#captcha")[0].className = 'show';
+        $("#embed-submit").click(function (e) {
+            var validate = captchaObj.getValidate();
+            if (!validate) {
+                $("#notice")[0].className = "show";
+                setTimeout(function () {
+                    $("#notice")[0].className = "hide";
+                }, 2000);
+                e.preventDefault();
+            }
+        });
+        captchaObj.appendTo("#embed-captcha");
+        captchaObj.onReady(function () {
+            $("#wait")[0].className = "hide";
+        });
+    };
+
+</script>
+{%endblock%}
