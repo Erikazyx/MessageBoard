@@ -13,7 +13,7 @@ def register():
         password = request.form.get("password1")
         if User.select().where(User.username == user):
             return jsonify({"error": "该用户名已被注册！"})
-        User.create(username=user, password=password)
+        User.create(username=user, password_hash=password)
         return jsonify({"error": ""})
 
 
@@ -27,14 +27,11 @@ def login():
         if not user or not password:
             flash("please input username and password!")
             return render_template("login.html")
-        elif (
-            not User.select().where(User.username == user)
-            or User.select().where(User.username == user).get().password != password
-        ):
+        user = User.select().where(User.username == user)
+        if not user or not user.get().verify_password(password):
             flash("wrong username or wrong password,try again")
             return render_template("login.html")
         else:
-            user = User.select().where(User.username == user).get()
             session["user_id"] = user.id
             session.permanent = True
             return redirect(url_for("main.main_page"))

@@ -26,13 +26,14 @@ def main_page():
     if not messages:
         messages = []
     else:
-        message_count = messages.count()
-        page = Page(message_count, page_index)
-        messages = messages[page.offset : page.limit]
         for message in messages:
             user = User.select().where(User.id == message.user_id)
             if user:
-                author[message.id] = user.get().username
+                author[message.user_id] = user.get().username
+        message_count = messages.count()
+        page = Page(message_count, page_index)
+        messages = messages[page.offset : page.limit]
+
     return render_template(
         "main_geetest.html", messages=messages, pagination=page, author=author
     )
